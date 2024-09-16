@@ -23,6 +23,7 @@ class TodoApp extends ConsumerWidget {
             trailing: Checkbox(
               value: todo.isCompleted,
               onChanged: (value) {
+                // Todo ni yangilash (tugallangan statusini o'zgartirish)
                 ref.read(todoProvider.notifier).updateTodo(
                       Todo(
                         id: todo.id,
@@ -32,8 +33,27 @@ class TodoApp extends ConsumerWidget {
                     );
               },
             ),
+            onTap: () async {
+              // Tahrirlash oynasini ochish
+              final newTitle = await _showEditTodoDialog(context, todo.title);
+              if (newTitle != null && newTitle.isNotEmpty) {
+                ref.read(todoProvider.notifier).updateTodo(
+                      Todo(
+                        id: todo.id,
+                        title: newTitle,
+                        isCompleted: todo.isCompleted,
+                      ),
+                    );
+              }
+            },
             onLongPress: () {
+              // Todo ni o'chirish
               ref.read(todoProvider.notifier).deleteTodo(todo.id!);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Todo o\'chirildi: ${todo.title}'),
+                ),
+              );
             },
           );
         },
@@ -55,25 +75,53 @@ class TodoApp extends ConsumerWidget {
     );
   }
 
+  // Yangi todo qo'shish dialog oynasi
   Future<String?> _showAddTodoDialog(BuildContext context) async {
     final controller = TextEditingController();
     return showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add Todo'),
+          title: const Text('Yangi Todo qo\'shish'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'Enter todo title'),
+            decoration: const InputDecoration(hintText: 'Todo nomini kiriting'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Bekor qilish'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Add'),
+              child: const Text('Qo\'shish'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Todo ni tahrirlash dialog oynasi
+  Future<String?> _showEditTodoDialog(BuildContext context, String currentTitle) async {
+    final controller = TextEditingController(text: currentTitle);
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Todo ni tahrirlash'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: 'Yangi todo nomini kiriting'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Bekor qilish'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: const Text('Saqlash'),
             ),
           ],
         );
